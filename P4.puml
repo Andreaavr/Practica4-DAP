@@ -1,0 +1,159 @@
+@startuml
+interface semaforo.secuencia.SecuenciaEstados {
+~ EstadoSemaforo siguiente()
+}
+
+interface semaforo.tiempo.Reloj {
+~ long ahoraMs()
+~ void esperar(Duration)
+}
+
+class semaforo.vista.VistaSwing {
+- PanelSemaforo panel
+- JLabel etiqueta
++ void alPulso(EstadoSemaforo,boolean)
+- {static} java.awt.Color aAwt(Color)
+}
+
+
+class semaforo.vista.VistaSwing$PanelSemaforo {
+- Color activo
+- boolean encendida
+~ void actualizar(Color,boolean)
+# void paintComponent(Graphics)
+}
+
+
+class semaforo.Main {
++ {static} void main(String[])
+}
+
+class semaforo.tiempo.RelojSistema {
++ long ahoraMs()
++ void esperar(Duration)
+}
+
+interface semaforo.observador.ObservadorSemaforo {
+~ void alCambiarEstado(EstadoSemaforo)
+~ void alPulso(EstadoSemaforo,boolean)
+}
+
+class semaforo.vista.ObservadorEnHiloSwing {
+- ObservadorSemaforo delegado
++ void alCambiarEstado(EstadoSemaforo)
++ void alPulso(EstadoSemaforo,boolean)
+- {static} ObservadorSemaforo crearEnHiloSwing(Supplier<? extends ObservadorSemaforo>)
+}
+
+
+class semaforo.sonido.EmisorSonidoAsincrono {
+- EmisorSonido delegado
+- ExecutorService hilo
++ void emitir(PerfilSonoro)
++ void close()
+}
+
+
+class semaforo.modelo.PerfilSonoro {
+- int frecuenciaHz
+- int duracionMs
++ int duracionMs()
++ int frecuenciaHz()
+}
+
+
+class semaforo.secuencia.CicloCircular {
+- List<EstadoSemaforo> estados
+- int indice
++ EstadoSemaforo siguiente()
+}
+
+
+class semaforo.sonido.EmisorSonidoJavaSound {
+- {static} float SAMPLE_RATE
+- SourceDataLine linea
++ void emitir(PerfilSonoro)
++ void close()
+}
+
+
+enum semaforo.modelo.Color {
++  ROJO
++  AMBAR
++  VERDE
+}
+
+interface semaforo.sonido.EmisorSonido {
+~ void emitir(PerfilSonoro)
+~ void close()
+}
+
+abstract class semaforo.estado.EstadoBase {
+- String nombre
+- Color color
+- Duration duracion
+- Duration intervalo
+- boolean parpadea
+- PerfilSonoro sonido
++ String nombre()
++ Color color()
++ Duration duracion()
++ Duration intervaloPulso()
++ boolean parpadea()
++ PerfilSonoro sonido()
+}
+
+
+class semaforo.estado.EstadoVerde {
+}
+class semaforo.estado.EstadoRojo {
+}
+class semaforo.sonido.AvisadorSonoro {
+- EmisorSonido emisor
++ void alPulso(EstadoSemaforo,boolean)
+}
+
+
+interface semaforo.estado.EstadoSemaforo {
+~ String nombre()
+~ Color color()
+~ Duration duracion()
+~ Duration intervaloPulso()
+~ boolean parpadea()
+~ PerfilSonoro sonido()
+}
+
+class semaforo.estado.EstadoAmbar {
+}
+class semaforo.nucleo.Semaforo {
+- SecuenciaEstados secuencia
+- Reloj reloj
+- List<ObservadorSemaforo> observadores
+- boolean activo
++ void suscribir(ObservadorSemaforo)
++ void detener()
++ void iniciar()
+- void ejecutar(EstadoSemaforo)
+}
+
+
+class semaforo.estado.EstadoVerdeParpadeante {
+}
+
+
+semaforo.observador.ObservadorSemaforo <|.. semaforo.vista.VistaSwing
+semaforo.vista.VistaSwing +.. semaforo.vista.VistaSwing$PanelSemaforo
+semaforo.vista.JPanel <|-- semaforo.vista.VistaSwing$PanelSemaforo
+semaforo.tiempo.Reloj <|.. semaforo.tiempo.RelojSistema
+semaforo.observador.ObservadorSemaforo <|.. semaforo.vista.ObservadorEnHiloSwing
+semaforo.sonido.EmisorSonido <|.. semaforo.sonido.EmisorSonidoAsincrono
+semaforo.secuencia.SecuenciaEstados <|.. semaforo.secuencia.CicloCircular
+semaforo.sonido.EmisorSonido <|.. semaforo.sonido.EmisorSonidoJavaSound
+semaforo.sonido.AutoCloseable <|-- semaforo.sonido.EmisorSonido
+semaforo.estado.EstadoSemaforo <|.. semaforo.estado.EstadoBase
+semaforo.estado.EstadoBase <|-- semaforo.estado.EstadoVerde
+semaforo.estado.EstadoBase <|-- semaforo.estado.EstadoRojo
+semaforo.observador.ObservadorSemaforo <|.. semaforo.sonido.AvisadorSonoro
+semaforo.estado.EstadoBase <|-- semaforo.estado.EstadoAmbar
+semaforo.estado.EstadoBase <|-- semaforo.estado.EstadoVerdeParpadeante
+@enduml
